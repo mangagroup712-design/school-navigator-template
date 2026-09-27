@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Map Editor</title>
+</head>
+
+<body>
+  <header class="toolbar">
+    <strong class="brand">地図エディタ</strong>
+    <div class="group" role="group" aria-label="ツール">
+      <button type="button" data-mode="select" title="選択・移動・リサイズ (V)">選択 <kbd>V</kbd></button>
+      <button type="button" data-mode="draw" title="ドラッグで部屋を追加 (R)">部屋 <kbd>R</kbd></button>
+      <button type="button" data-mode="dot" title="クリックで選択中の部屋の lineDot を設定 (D)">lineDot <kbd>D</kbd></button>
+    </div>
+    <div class="group" role="group" aria-label="フロア形状">
+      <button type="button" data-mode="shape-rect" title="ドラッグで四角形の形状を追加 (S)">四角形 <kbd>S</kbd></button>
+      <button type="button" data-mode="shape-poly" title="クリックで頂点を追加、始点クリック/ダブルクリック/Enterで確定 (P)">多角形 <kbd>P</kbd></button>
+      <select id="shape-kind" title="描く形状の種類">
+        <option value="walk">歩行エリア</option>
+        <option value="block">障害物</option>
+        <option value="deco">装飾</option>
+        <option value="floor">外形</option>
+      </select>
+    </div>
+    <label class="group">スナップ
+      <select id="snap">
+        <option value="1">1</option>
+        <option value="5" selected>5</option>
+        <option value="10">10</option>
+      </select>
+    </label>
+    <div class="group">
+      <button type="button" id="undo" title="元に戻す (Ctrl+Z)">↶</button>
+      <button type="button" id="redo" title="やり直す (Ctrl+Y)">↷</button>
+    </div>
+    <button type="button" id="fit" title="地図全体を表示 (F)">全体表示</button>
+    <span id="cursor" class="cursor">—</span>
+    <span class="spacer"></span>
+    <span id="status" class="status"></span>
+    <div class="group">
+      <label class="button" title="既存の mapinfo.js を読み込む">読込<input id="import" type="file" accept=".js,.mjs" hidden></label>
+      <button type="button" id="download">ダウンロード</button>
+      <button type="button" id="copy">コピー</button>
+      <button type="button" id="save" class="primary" title="env/mapinfo.js に保存 (Ctrl+S)">保存</button>
+    </div>
+  </header>
+
+  <main class="layout">
+    <aside class="panel left">
+      <section>
+        <h2>階層</h2>
+        <ul id="floor-list" class="list"></ul>
+        <div class="row">
+          <button type="button" id="floor-add">＋ 追加</button>
+          <button type="button" id="floor-up" title="上へ">▲</button>
+          <button type="button" id="floor-down" title="下へ">▼</button>
+          <button type="button" id="floor-delete" class="danger">削除</button>
+        </div>
+        <label>階層名<input id="floor-name" type="text"></label>
+        <label>地図SVG
+          <select id="floor-file"></select>
+        </label>
+        <p id="floor-shape-status" class="hint"></p>
+        <button type="button" id="floor-import" class="primary">画像・PDFから取り込む…</button>
+        <button type="button" id="floor-shapes-new">このフロアの形状をエディタで作成</button>
+        <button type="button" id="floor-merge" title="重なる・接する歩行エリアを1つの多角形にまとめます">歩行エリアを結合</button>
+        <button type="button" id="floor-stairs-link" title="上下の階で近い位置にある階段を同じ StairID にします">階段を自動リンク</button>
+        <label class="button block">SVGをアップロード<input id="svg-upload" type="file" accept=".svg,image/svg+xml" hidden></label>
+      </section>
+      <section>
+        <h2>下絵 <small>(保存されません)</small></h2>
+        <label class="button block">画像を選択 (PNG/JPG/SVG)<input id="trace-file" type="file" accept="image/*" hidden></label>
+        <div id="trace-controls" class="row" hidden>
+          <input id="trace-opacity" type="range" min="0.1" max="1" step="0.05" value="0.5" title="不透明度">
+          <button type="button" id="trace-clear">消す</button>
+        </div>
+      </section>
+      <section class="grow">
+        <h2>部屋 <small id="room-count"></small></h2>
+        <input id="room-filter" type="search" placeholder="絞り込み">
+        <ul id="room-list" class="list scroll"></ul>
+      </section>
+      <section>
+        <h2>チェック <small id="issue-count"></small></h2>
+        <ul id="issues" class="issues scroll"></ul>
+      </section>
+    </aside>
+
+    <div id="map" class="map"></div>
+
+    <aside class="panel right">
+      <div id="room-empty" class="empty">
+        <p>何も選択されていません。</p>
+        <p>SVGがないフロアは、<b>四角形</b>・<b>多角形</b>で歩行エリア（廊下など）を描いてから、<b>部屋</b>ツールで部屋を追加します。</p>
+        <ul class="help">
+          <li><kbd>V</kbd> 選択 / <kbd>R</kbd> 部屋 / <kbd>D</kbd> lineDot</li>
+          <li><kbd>S</kbd> 四角形 / <kbd>P</kbd> 多角形（<kbd>Shift</kbd>で水平・垂直）</li>
+          <li>部屋をドラッグで移動、角のハンドルでリサイズ</li>
+          <li><kbd>Del</kbd> 削除 / <kbd>Ctrl</kbd>+<kbd>D</kbd> 複製</li>
+          <li>矢印キーで移動（<kbd>Shift</kbd>で10倍）</li>
+          <li><kbd>F</kbd> 全体表示 / <kbd>Esc</kbd> 選択解除</li>
+        </ul>
+      </div>
+      <form id="shape-form" hidden>
+        <h2>形状の設定</h2>
+        <label>種類
+          <select name="kind">
+            <option value="walk">歩行エリア</option>
+            <option value="block">障害物</option>
+            <option value="deco">装飾</option>
+            <option value="floor">外形</option>
+          </select>
+        </label>
+        <p id="shape-kind-hint" class="hint"></p>
+        <div id="shape-colors" class="swatches" hidden></div>
+        <p id="shape-info" class="hint"></p>
+        <ul class="help">
+          <li>選択中の形状をドラッグで移動</li>
+          <li>□ 頂点をドラッグで変形、右クリックで削除</li>
+          <li>○ 辺の中点をドラッグで頂点を追加</li>
+        </ul>
+        <div class="row">
+          <button type="button" id="shape-front">前面へ</button>
+          <button type="button" id="shape-back">背面へ</button>
+        </div>
+        <div class="row">
+          <button type="button" id="shape-duplicate">複製</button>
+          <button type="button" id="shape-delete" class="danger">削除</button>
+        </div>
+      </form>
+      <form id="room-form" hidden>
+        <h2>部屋の設定</h2>
+        <label>名前<input name="name" type="text" required placeholder="例：1-1、トイレ、階段"></label>
+        <p class="hint">「トイレ」「階段」を含む名前は専用表示になります。</p>
+        <label>検索語 <small>(カンマ区切り)</small><input name="searchTerms" type="text" placeholder="1-1, 1年1組"></label>
+        <label>StairID <small>(別の階と同じIDで接続)</small><input name="StairID" type="text" list="stair-ids" placeholder="例：stair-east"></label>
+        <datalist id="stair-ids"></datalist>
+        <p id="stair-links" class="hint"></p>
+        <button type="button" id="stair-autolink">近くの階段とリンク</button>
+        <label>eventIds <small>(カンマ区切り)</small><input name="eventIds" type="text"></label>
+
+        <fieldset>
+          <legend>範囲 (bounds)</legend>
+          <div class="grid2">
+            <label>上 (lat)<input name="n" type="number" step="any"></label>
+            <label>下 (lat)<input name="s" type="number" step="any"></label>
+            <label>左 (lng)<input name="w" type="number" step="any"></label>
+            <label>右 (lng)<input name="e" type="number" step="any"></label>
+          </div>
+        </fieldset>
+        <fieldset>
+          <legend>lineDot <small>(経路の出入口)</small></legend>
+          <div class="grid2">
+            <label>lat<input name="dotLat" type="number" step="any"></label>
+            <label>lng<input name="dotLng" type="number" step="any"></label>
+          </div>
+          <div class="row">
+            <button type="button" id="dot-pick">地図で指定</button>
+            <button type="button" id="dot-clear">クリア</button>
+          </div>
+        </fieldset>
+        <div class="row">
+          <button type="button" id="room-duplicate">複製</button>
+          <button type="button" id="room-delete" class="danger">削除</button>
+        </div>
+      </form>
+    </aside>
+  </main>
+
+  <dialog id="import-dialog" class="import-dialog">
+    <header>
+      <h2>画像・PDFから取り込む</h2>
+      <p class="hint">間取り図の画像や PDF から、歩行エリア（通路の色の部分）と部屋（線で囲まれた領域）を検出します。取り込み後に名前や細部を調整してください。</p>
+    </header>
+    <div class="import-body">
+      <div class="import-preview">
+        <label id="import-empty" class="button drop">画像・PDFを選択 (PNG/JPG/PDF)<input class="import-file" type="file" accept="image/*,application/pdf,.pdf" hidden></label>
+        <canvas id="import-canvas" hidden title="クリックした色を歩行エリアの色にします"></canvas>
+      </div>
+      <div class="import-options">
+        <label class="button block">別のファイルを選択<input class="import-file" type="file" accept="image/*,application/pdf,.pdf" hidden></label>
+        <div id="import-pages" class="row pages" hidden>
+          <button type="button" id="import-prev" title="前のページ">◀</button>
+          <span id="import-page-label"></span>
+          <button type="button" id="import-next" title="次のページ">▶</button>
+        </div>
+        <label id="import-all-pages-label" class="check" hidden><input id="import-all-pages" type="checkbox"> 全ページを取り込む（1ページ目を今の階、以降を次の階へ）</label>
+        <div>
+          <span class="label">歩行エリアの色</span>
+          <div class="row">
+            <span id="import-walk-color" class="swatch"></span>
+            <button type="button" id="import-walk-auto">自動</button>
+          </div>
+          <p class="hint">プレビュー画像をクリックすると、その色を通路の色として使います。</p>
+        </div>
+        <label>色の許容差 <input id="import-tolerance" type="range" min="4" max="80" value="12"></label>
+        <label>通路内の線を埋める <input id="import-close" type="range" min="0" max="8" value="3"></label>
+        <label>最小の部屋サイズ <input id="import-min-room" type="range" min="1" max="100" value="4"></label>
+        <fieldset>
+          <legend>取り込む内容</legend>
+          <label class="check"><input id="import-walk" type="checkbox" checked> 歩行エリア</label>
+          <label class="check"><input id="import-rooms" type="checkbox" checked> 部屋</label>
+          <label class="check"><input id="import-stairs" type="checkbox" checked> 階段を検出（上下の階と自動リンク）</label>
+          <label class="check"><input id="import-dots" type="checkbox" checked> lineDot を自動配置</label>
+          <label class="check"><input id="import-replace" type="checkbox" checked> 今の階の部屋・形状を置き換える</label>
+        </fieldset>
+        <p id="import-summary" class="summary"></p>
+      </div>
+    </div>
+    <footer class="row">
+      <button type="button" id="import-cancel">キャンセル</button>
+      <button type="button" id="import-apply" class="primary">取り込む</button>
+    </footer>
+  </dialog>
+
+  <script type="module" src="src/editor/main.ts"></script>
+</body>
+</html>

@@ -1,18 +1,19 @@
-/**
- * @type {{
- *   map: L.Map | null,
- *   imageOverlays: L.ImageOverlay[],
- *   baseLayers: {[floorName: string]: L.ImageOverlay},
- *   layerGroups: Map<string, L.LayerGroup>,
- *   roomLabelLayerGroups: Map<string, L.LayerGroup>,
- *   roomLabelBounds: Map<L.Marker, L.LatLngBounds>,
- *   roomLayers: Map<RoomInfo, L.Rectangle>,
- *   currentRoom: RoomInfo|null,
- *   destinationRoom: RoomInfo|null,
- *   nowBaseLayerName: string,
- * }}
- */
-export const mapState = {
+import type L from "leaflet";
+
+export interface MapState {
+  map: L.Map | null;
+  imageOverlays: L.ImageOverlay[];
+  baseLayers: { [floorName: string]: L.ImageOverlay };
+  layerGroups: Map<string, L.LayerGroup>;
+  roomLabelLayerGroups: Map<string, L.LayerGroup>;
+  roomLabelBounds: Map<L.Marker, L.LatLngBounds>;
+  roomLayers: Map<RoomInfo, L.Rectangle>;
+  currentRoom: RoomInfo | null;
+  destinationRoom: RoomInfo | null;
+  nowBaseLayerName: string;
+}
+
+export const mapState: MapState = {
   map: null,
   imageOverlays: [],
   baseLayers: {},
@@ -25,7 +26,7 @@ export const mapState = {
   nowBaseLayerName: "",
 };
 
-export function refreshRoomHighlights() {
+export function refreshRoomHighlights(): void {
   for (const [room, layer] of mapState.roomLayers) {
     const selected =
       room === mapState.currentRoom || room === mapState.destinationRoom;
@@ -36,7 +37,7 @@ export function refreshRoomHighlights() {
   }
 }
 
-export function requireMap() {
+export function requireMap(): L.Map {
   if (!mapState.map) {
     throw new Error("map is not initialized");
   }

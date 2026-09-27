@@ -1,20 +1,14 @@
 import L from "leaflet";
 import mapInfo from "../../env/mapinfo.js";
-import { debug } from "../debug.js";
-import { mapState, requireMap } from "./state.js";
+import { debug } from "../debug";
+import { mapState, requireMap } from "./state";
 
-/** @type {[number, number]|null} */
-let debugBounds = null;
-/** @type {L.Popup|null} */
-let debugPopup = null;
+let debugBounds: [number, number] | null = null;
+let debugPopup: L.Popup | null = null;
 
-/** @type {((room: RoomInfo) => void)|null} */
-let onRoomClick = null;
+let onRoomClick: ((room: RoomInfo) => void) | null = null;
 
-/**
- * @param {L.LeafletMouseEvent} e
- */
-function handleDebugBoundsClick(e) {
+function handleDebugBoundsClick(e: L.LeafletMouseEvent): void {
   const map = requireMap();
   if (!debugBounds && !debugPopup) {
     const coord = e.latlng;
@@ -60,10 +54,7 @@ function handleDebugBoundsClick(e) {
   }, 500);
 }
 
-/**
- * @param {L.LeafletMouseEvent} e
- */
-function handleDebugLineDotClick(e) {
+function handleDebugLineDotClick(e: L.LeafletMouseEvent): void {
   const coord = [e.latlng.lat, e.latlng.lng];
   navigator.clipboard.writeText(`lineDot: [${coord}],`);
   L.popup({
@@ -77,11 +68,7 @@ function handleDebugLineDotClick(e) {
     .openOn(requireMap());
 }
 
-/**
- * @param {L.LatLng} latlng
- * @returns {RoomInfo|undefined}
- */
-function findRoomAt(latlng) {
+function findRoomAt(latlng: L.LatLng): RoomInfo | undefined {
   const floor = mapInfo.floors.find(
     (f) => f.floorName === mapState.nowBaseLayerName,
   );
@@ -95,13 +82,12 @@ function findRoomAt(latlng) {
   );
 }
 
-/**
- * @param {L.Map} map
- * @param {((room: RoomInfo) => void)|null} [roomClick]
- */
-export function bindMapClicks(map, roomClick = null) {
+export function bindMapClicks(
+  map: L.Map,
+  roomClick: ((room: RoomInfo) => void) | null = null,
+): void {
   onRoomClick = roomClick;
-  map.on("click", function (e) {
+  map.on("click", function (e: L.LeafletMouseEvent) {
     if (debug && e.originalEvent.altKey) {
       handleDebugLineDotClick(e);
       return;

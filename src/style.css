@@ -1380,6 +1380,66 @@ nav > button.active-page::after {
   stroke-linecap: round;
 }
 
+/* 階をまたぐ経路の手順 */
+.route-steps {
+  list-style: none;
+  margin: 10px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.route-steps[hidden] { display: none; }
+.route-step {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 22px 22px minmax(0, 1fr);
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.55);
+  color: var(--text-main);
+  font: inherit;
+  font-size: 0.85rem;
+  text-align: left;
+  cursor: pointer;
+}
+.route-step.active {
+  border-color: #8e44ad;
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(142, 68, 173, 0.18);
+}
+.route-step.done { opacity: 0.6; }
+.route-step-number {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #8e44ad;
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+.route-step .material-symbols-outlined { font-size: 20px; color: #8e44ad; }
+.route-step-text { display: flex; flex-direction: column; line-height: 1.3; }
+.route-step-text small { color: var(--text-muted); font-size: 0.72rem; font-weight: 700; }
+
+/* 経路の目印のラベル */
+.leaflet-tooltip.route-tooltip { font-weight: 700; }
+.leaflet-tooltip.route-tooltip-stair {
+  background: #8e44ad;
+  border-color: #8e44ad;
+  color: #fff;
+  font-size: 0.9rem;
+}
+.leaflet-tooltip-top.route-tooltip-stair::before { border-top-color: #8e44ad; }
+.leaflet-tooltip-bottom.route-tooltip-stair::before { border-bottom-color: #8e44ad; }
+.leaflet-tooltip-left.route-tooltip-stair::before { border-left-color: #8e44ad; }
+.leaflet-tooltip-right.route-tooltip-stair::before { border-right-color: #8e44ad; }
+
 @media screen and (max-width: 520px) {
   .navigation-banner {
     top: 10px;

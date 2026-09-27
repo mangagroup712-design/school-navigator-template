@@ -1,3 +1,4 @@
+// @ts-expect-error ../card は現状存在しない（このファイルはどこからも import されていない）
 import { closeCard } from "../card";
 import { pageState } from "../pageState";
 import mapInfo from "../../env/mapinfo.js";
@@ -11,10 +12,8 @@ import { mapState, requireMap } from "./state";
 
 /**
  * マップへ向かう。
- * @param {string} id
- * @param {"booth"|"event"} type
  */
-export function goMap(id, type) {
+export function goMap(id: string, type: "booth" | "event"): void {
   const map = requireMap();
   closeCard();
   pageState.page = "map";
@@ -45,4 +44,3 @@ export function goMap(id, type) {
     }, 5000);
   }
 }
-

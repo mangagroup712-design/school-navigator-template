@@ -1,0 +1,27 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "lib": [
+      "ES2022",
+      "DOM",
+      "DOM.Iterable"
+    ],
+    "strict": true,
+    "noEmit": true,
+    "allowJs": true,
+    "checkJs": true,
+    "isolatedModules": true,
+    "allowImportingTsExtensions": true,
+    "skipLibCheck": true,
+    "types": ["vite/client"]
+  },
+  "include": [
+    "src/**/*",
+    "env/**/*.js",
+    "functions/**/*",
+    "vite.config.ts", // ← ルート直下の vite.config.ts を対象に含める
+    "types/*"
+  ]
+}

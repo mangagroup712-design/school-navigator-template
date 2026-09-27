@@ -1,13 +1,18 @@
+export interface Point {
+  x: number;
+  y: number;
+}
+
 /**
  * Parse SVG path data into closed polygon rings.
  *
  * Routing uses an occupancy grid, but the SVG parser is kept independent so
  * compound walkable paths can still be rasterized without a geometry library.
  */
-export function parseSvgPathRings(d) {
+export function parseSvgPathRings(d: string): Point[][] {
   const tokens = d.match(/[a-z]|-?(?:\d*\.)?\d+(?:e[-+]?\d+)?/gi) ?? [];
-  const rings = [];
-  let ring = [];
+  const rings: Point[][] = [];
+  let ring: Point[] = [];
   let command = "";
   let index = 0;
   let x = 0;

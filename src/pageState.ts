@@ -1,10 +1,9 @@
-/**@typedef {import("../types/types").PamphletPage} PamphletPage */
+import type { PamphletPage } from "../types/types";
 
-import { requireMap } from "./map/state.js";
-import { timeout } from "./util.js";
+import { requireMap } from "./map/state";
+import { timeout } from "./util";
 
-/**@type {PamphletPage[]} */
-const PAMPHLET_PAGES = ["map", "help"];
+const PAMPHLET_PAGES: PamphletPage[] = ["map", "help"];
 const SLIDE_ANIMATION = {
   /**ページを端から端までスクロールするときの秒数 */
   pageSlideSeconds: 0.3,
@@ -31,11 +30,7 @@ menuToggle?.addEventListener("click", () => {
   menuToggle.setAttribute("aria-expanded", String(isOpen));
 });
 
-/**
- * @param {PamphletPage} from
- * @param {PamphletPage} to
- */
-async function slidePage(from, to) {
+async function slidePage(from: PamphletPage, to: PamphletPage): Promise<void> {
   if (from === to) return;
   const fromIndex = PAMPHLET_PAGES.indexOf(from);
   const toIndex = PAMPHLET_PAGES.indexOf(to);
@@ -52,20 +47,20 @@ async function slidePage(from, to) {
   const isSlideToLeft = fromIndex > toIndex;
   const slideTargets = PAMPHLET_PAGES.slice(slideMin, slideMax + 1)
     .map((p) => document.getElementById(`${p}-page`))
-    .filter((p) => !!p);
+    .filter((p): p is HTMLElement => !!p);
   if (isSlideToLeft) slideTargets.reverse();
   let slideIndex = 0;
-  const slideStartStyle = {
+  const slideStartStyle: Keyframe = {
     transform: `translateX(${isSlideToLeft ? "-" : ""}100vw)`,
   };
-  const slideMiddleStyle = {
+  const slideMiddleStyle: Keyframe = {
     transform: `none`,
   };
-  const slideEndStyle = {
+  const slideEndStyle: Keyframe = {
     transform: `translateX(${isSlideToLeft ? "" : "-"}100vw)`,
   };
   for (const slideTarget of slideTargets) {
-    const keyframes = [];
+    const keyframes: Keyframe[] = [];
     let duration = 0;
     let ease = SLIDE_ANIMATION.middleEase;
     if (slideIndex > 1) {
@@ -102,12 +97,11 @@ async function slidePage(from, to) {
 }
 
 const pageState = {
-  /**@type {PamphletPage} */
-  _page: "map",
-  get page() {
+  _page: "map" as PamphletPage,
+  get page(): PamphletPage {
     return this._page;
   },
-  set page(value) {
+  set page(value: PamphletPage) {
     for (const pamphletPage of PAMPHLET_PAGES) {
       const btnElement = document.getElementById(`nav-${pamphletPage}-btn`);
       if (!btnElement) continue;

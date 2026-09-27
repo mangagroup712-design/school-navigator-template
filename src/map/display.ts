@@ -1,15 +1,17 @@
 import L from "leaflet";
 import stairsIconUrl from "../../Stairs.svg";
 import mapInfo from "../../env/mapinfo.js";
-import { debug } from "../debug.js";
-import { multiSelect } from "../util.js";
-import { ROOM_COLOR_DEBUG, ROOM_COLOR_STAIR, ROOM_COLOR_TOILET, mapBounds } from "./constants.js";
-import { mapState } from "./state.js";
+import { debug } from "../debug";
+import { multiSelect } from "../util";
+import { ROOM_COLOR_DEBUG, ROOM_COLOR_STAIR, ROOM_COLOR_TOILET, mapBounds } from "./constants";
+import { mapState } from "./state";
 
 /**
  * 階層画像・部屋の矩形・部屋名ラベルを生成して state に載せる。
  */
-export function buildMapDisplay() {
+export function buildMapDisplay(): void {
+  // 部屋の四角は数が多いので、SVG 要素ではなく1枚の Canvas にまとめて描く
+  const roomRenderer = L.canvas({ padding: 0.5 });
   for (const floor of mapInfo.floors) {
     const imgOverlay = L.imageOverlay(`/env/${floor.floorFile}`, mapBounds, {
       attribution: mapInfo.attribution,
@@ -26,8 +28,7 @@ export function buildMapDisplay() {
         L.latLng(...room.bounds[1]),
       );
 
-      /** @type {string|undefined} */
-      const color = multiSelect(
+      const color: string | undefined = multiSelect(
         room.name !== "トイレ" && !room.name.includes("階段"),
         "#3388ff",
         room.name === "トイレ",
@@ -39,9 +40,9 @@ export function buildMapDisplay() {
       );
 
       if (typeof color !== "undefined") {
-        /** @type {L.PolylineOptions} */
-        const defaultStyle = {
+        const defaultStyle: L.PolylineOptions = {
           className: "map-room-selectable",
+          renderer: roomRenderer,
           color,
           weight: 3,
           fillColor: color,

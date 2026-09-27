@@ -1,12 +1,14 @@
 import L from "leaflet";
-import { ZOOM_THRESHOLD } from "./constants.js";
-import { mapState, requireMap } from "./state.js";
+import { ZOOM_THRESHOLD } from "./constants";
+import { mapState, requireMap } from "./state";
 
 /**
  * 現在のズームを基準に Bound のピクセルサイズを取る。
- * @param {L.LatLngBounds} bounds
  */
-function calcBoundsWidthHeightPixel(bounds) {
+function calcBoundsWidthHeightPixel(bounds: L.LatLngBounds): {
+  width: number;
+  height: number;
+} {
   const map = requireMap();
   const sw = bounds.getSouthWest();
   const ne = bounds.getNorthEast();
@@ -20,9 +22,8 @@ function calcBoundsWidthHeightPixel(bounds) {
 
 /**
  * 階層画像の切り替えに合わせて部屋レイヤーを差し替える。
- * @param {string} newBaseLayerName
  */
-export function changeLayerGroups(newBaseLayerName) {
+export function changeLayerGroups(newBaseLayerName: string): void {
   const map = requireMap();
   mapState.layerGroups.get(mapState.nowBaseLayerName)?.remove();
   mapState.layerGroups.get(newBaseLayerName)?.addTo(map);
@@ -32,7 +33,7 @@ export function changeLayerGroups(newBaseLayerName) {
 /**
  * ズーム量を見て部屋名ラベルの表示／非表示を切り替える。
  */
-export function recheckRoomLabelShowStatus() {
+export function recheckRoomLabelShowStatus(): void {
   const currentZoom = requireMap().getZoom();
   const layerGroup = mapState.layerGroups.get(mapState.nowBaseLayerName);
   const roomLabelLayerGroup = mapState.roomLabelLayerGroups.get(
@@ -50,7 +51,7 @@ export function recheckRoomLabelShowStatus() {
 /**
  * ズームに合わせて部屋名ラベルのサイズを更新する。
  */
-export function calculateRoomLabelArea() {
+export function calculateRoomLabelArea(): void {
   const roomLabelLayerGroup = mapState.roomLabelLayerGroups.get(
     mapState.nowBaseLayerName,
   );
@@ -62,38 +63,27 @@ export function calculateRoomLabelArea() {
   roomLabelLayerGroup.eachLayer((label) => {
     if (!(label instanceof L.Marker)) return;
     const bounds = mapState.roomLabelBounds.get(label);
-    const icon = label.getIcon();
-    if (!(icon instanceof L.DivIcon)) return;
-    const optionsHtml = icon.options.html;
-    const html =
-      optionsHtml instanceof HTMLElement
-        ? optionsHtml.innerHTML
-        : optionsHtml || undefined;
-    if (!bounds) throw new Error(`calculateRoomLabelArea: unknown bounds (${html})`);
+    const element = label.getElement();
+    if (!bounds || !element) return;
     const { width, height } = calcBoundsWidthHeightPixel(bounds);
-
-    label.setIcon(
-      L.divIcon({
-        className: "map-room-text",
-        html,
-        iconSize: [width, height],
-        iconAnchor: [width / 2, height / 2],
-      }),
-    );
+    // setIcon でアイコンを作り直すと部屋が多いときに重いので、既存の要素の大きさだけ変える
+    element.style.width = `${width}px`;
+    element.style.height = `${height}px`;
+    element.style.marginLeft = `${-width / 2}px`;
+    element.style.marginTop = `${-height / 2}px`;
   });
 }
 
-export function refreshCurrentFloorDisplay() {
+export function refreshCurrentFloorDisplay(): void {
   recheckRoomLabelShowStatus();
   calculateRoomLabelArea();
 }
 
 /**
  * 階層変更・ズームに応じた表示更新をマップへ接続する。
- * @param {L.Map} map
  */
-export function bindMapDisplayUpdates(map) {
-  map.on("baselayerchange", function (e) {
+export function bindMapDisplayUpdates(map: L.Map): void {
+  map.on("baselayerchange", function (e: L.LayersControlEvent) {
     changeLayerGroups(e.name);
     refreshCurrentFloorDisplay();
   });
@@ -105,9 +95,8 @@ export function bindMapDisplayUpdates(map) {
 
 /**
  * 指定した階層の画像と部屋レイヤーを表示する。
- * @param {string} floorName
  */
-export function showFloor(floorName) {
+export function showFloor(floorName: string): void {
   const overlay = mapState.baseLayers[floorName];
   if (!overlay) {
     throw new Error(`showFloor: unknown floor (${floorName})`);

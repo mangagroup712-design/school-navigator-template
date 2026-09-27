@@ -4,7 +4,7 @@ export const SVG_WIDTH = 700;
 export const SVG_HEIGHT = 800;
 export const ZOOM_THRESHOLD = 1;
 
-export const mapBounds = L.latLngBounds(
+export const mapBounds: L.LatLngBounds = L.latLngBounds(
   L.latLng(0, 0),
   L.latLng(SVG_HEIGHT, SVG_WIDTH),
 );

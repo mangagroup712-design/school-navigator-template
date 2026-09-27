@@ -15,5 +15,7 @@ interface RoomInfo {
   StairID?: string;
   /** Search aliases retained for room lookup and deep links. */
   searchTerms?: string[];
+  /** @deprecated searchTerms の旧名。検索時のフォールバックとして参照される。 */
+  aliases?: string[];
   eventIds?: string[];
 }

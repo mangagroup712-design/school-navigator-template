@@ -1,14 +1,15 @@
 import mapInfo from "../../env/mapinfo.js";
-import { bindMapClicks } from "./click.js";
-import { buildMapDisplay } from "./display.js";
-import { addFloorControl, createMap } from "./init.js";
-import { bindMapDisplayUpdates, showFloor } from "./update.js";
+import { bindMapClicks } from "./click";
+import { buildMapDisplay } from "./display";
+import { addFloorControl, createMap } from "./init";
+import { bindMapDisplayUpdates, showFloor } from "./update";
 
 /**
  * マップの初期化・表示構築・更新・クリック処理をまとめて起動する。
- * @param {{ onRoomClick?: ((room: RoomInfo) => void)|null }} [options]
  */
-export function initMap(options = {}) {
+export function initMap(
+  options: { onRoomClick?: ((room: RoomInfo) => void) | null } = {},
+): void {
   const map = createMap();
   buildMapDisplay();
   bindMapDisplayUpdates(map);
